@@ -64,7 +64,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   def set_dimmable(light, to_load_level)
-    perform_action = {"action" => "SetLoadLevelTarget", "newLoadlevelTarget" => to_load_level.to_s}
+    perform_action = {"action" => "SetLoadLevelTarget", "newLoadlevelTarget" => to_load_level}
     set_light(light, perform_action)
   end
   
@@ -94,7 +94,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     request_completed
   end
   
-  listen_for /set the ([\d\w\s]*) to ([0-9,]*[0-9]) (percent|%)/i do |input,number|
+  listen_for /make ([0-9,]*[0-9]) the level for ([\d\w\s]*) ([0-9,]*[0-9])/i do |number,input|
     
     #say "I undestood #{input}"
     if @dimmable_lights.has_key?(input.downcase) and ((number <= 100) and (number >= 0))
@@ -108,7 +108,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     request_completed
   end
   
-  listen_for /set (scene|seen) ([\d\w\s]*)/i do |input|
+  listen_for /set (scene|seen) ([\d\w\s]*)/i do |spacer,input|
     #say "I undestood #{input}"
     if @scenes.has_key?(input.downcase)
       result = @client.get("#{@base_uri}/data_request",
