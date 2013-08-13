@@ -58,7 +58,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
       perform_action['newTargetValue'] = "0" if on_or_off.downcase == "off"
       set_light(light, perform_action) 
     elsif light['serviceId'] == "urn:upnp-org:serviceId:Dimming1"
-      set_dimmable(light, 100) if on_or_off.downcase == "on"
+      set_dimmable(light, 99) if on_or_off.downcase == "on"
       set_dimmable(light, 0) if on_or_off.downcase == "off" 
     end
   end
@@ -94,7 +94,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     request_completed
   end
   
-  listen_for /set the ([\d\w\s]*) to ([0-9,]*[0-9]) percent/i do |input,number|
+  listen_for /set the ([\d\w\s]*) to ([0-9,]*[0-9]) (percent|%)/i do |input,number|
     
     #say "I undestood #{input}"
     if @dimmable_lights.has_key?(input.downcase) and ((number <= 100) and (number >= 0))
