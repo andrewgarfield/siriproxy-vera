@@ -57,10 +57,10 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
       perform_action['newTargetValue'] = "1" if on_or_off.downcase == "on" 
       perform_action['newTargetValue'] = "0" if on_or_off.downcase == "off"
       set_light(light, perform_action) 
-     elsif light['serviceId'] == "urn:upnp-org:serviceId:Dimming1"
-       set_dimmable(light, 100) if on_or_off.downcase == "on"
-       set_dimmable(light, 0) if on_or_off.downcase == "off" 
-     end
+    elsif light['serviceId'] == "urn:upnp-org:serviceId:Dimming1"
+      set_dimmable(light, 100) if on_or_off.downcase == "on"
+      set_dimmable(light, 0) if on_or_off.downcase == "off" 
+    end
   end
   
   def set_dimmable(light, to_load_level)
@@ -70,7 +70,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   
   def set_light(light, to_level)
     return @client.get("#{@base_uri}/data_request",
-         {'id' => 'lu_action'}.merge(light).merge(to_level))
+    {'id' => 'lu_action'}.merge(light).merge(to_level))
   end
   
   listen_for /how many scenes do you know/i do
@@ -80,25 +80,50 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   listen_for /turn ([a-z]*) the ([\d\w\s]*)/i do |on_or_off, input|
+    lights = @binary_lights.merge(@dimmable_lights)
     
+    #say "I undestood #{input}"
+    if lights.has_key?(input.downcase)
+      result = turn(lights[input.downcase], on_or_off)
+      say "Turning #{input.downcase} #{on_or_off}." if result
+      say "Error turning #{input.downcase} #{on_or_off}." if not result
+    else
+      say "Couldn't find a device by the name #{input}."
+    end
+
+    request_completed
+  end
+  
+  listen_for /dim ([\d\w\s]*) to ([0-9,]*[0-9]) percent/i do |input,number|
+    
+    #say "I undestood #{input}"
+    if @dimmable_lights.has_key?(input.downcase) and ((number <= 100) and (number >= 0))
+      result = turn(@dimmable_lights[input.downcase], number)
+      say "Turning #{input.downcase} to #{number} percent." if result
+      say "Error turning #{input.downcase} to #{number} percent." if not result
+    else
+      say "Couldn't find a device by the name #{input} to change to #{number} percent."
+    end
+
+    request_completed
   end
   
   listen_for /set ([\d\w\s]*)/i do |input|
-     #say "I undestood #{input}"
-     if @scenes.has_key?(input.downcase)
-        result = @client.get("#{@base_uri}/data_request",
-         {:id => "lu_action", 
-           :serviceId => "urn:micasaverde-com:serviceId:HomeAutomationGateway1", 
-           :action => "RunScene", 
-           :SceneNum => @scenes[input.downcase]})
-        say "Running scene #{input.downcase}" if result
-        say "Error running scene #{input.downcase}" if not result
-      else
-        say "Couldn't find a scene by the name #{input}"
-      end
+    #say "I undestood #{input}"
+    if @scenes.has_key?(input.downcase)
+      result = @client.get("#{@base_uri}/data_request",
+      {:id => "lu_action", 
+        :serviceId => "urn:micasaverde-com:serviceId:HomeAutomationGateway1", 
+        :action => "RunScene", 
+        :SceneNum => @scenes[input.downcase]})
+        say "Running scene #{input.downcase}." if result
+        say "Error running scene #{input.downcase}." if not result
+    else
+        say "Couldn't find a scene by the name #{input}."
+    end
 
-     request_completed
-   end
+      request_completed
+  end
 
   # #get the user's location and display it in the logs
 #   #filters are still in their early stages. Their interface may be modified
