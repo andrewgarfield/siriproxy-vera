@@ -94,15 +94,18 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     request_completed
   end
   
-  listen_for /(DM|dim) the ([\d\w\s]*) to level ([0-9,]*[0-9])/i do |spacer,input,number|
-    
-    #say "I undestood #{input}"
-    if @dimmable_lights.has_key?(input.downcase) and ((number <= 100) and (number >= 0))
-      result = turn(@dimmable_lights[input.downcase], number)
-      say "Turning #{input.downcase} to #{number} percent." if result
-      say "Error turning #{input.downcase} to #{number} percent." if not result
+  # listen_for /set level ([0-9,]*[0-9]) on ([\d\w\s]*)/i do |number,input|
+  listen_for /change ([\d\w\s]*)/i do |input|
+    if @dimmable_lights.has_key?(input.downcase)
+      say "I can change the level of the #{input.downcase} for you."
+      number = ask "To what should I change it?"
+      if (number =~ /([0-9,]*[0-9])/i) and ((number <= 100) and (number >= 0))
+        result = turn(@dimmable_lights[input.downcase], number)
+        say "Turning #{input.downcase} to #{number} percent." if result
+        say "Error turning #{input.downcase} to #{number} percent." if not result
+      end
     else
-      say "Couldn't find a device by the name #{input} to change to #{number} percent."
+      say "Couldn't find a device by the name #{input}."
     end
 
     request_completed
