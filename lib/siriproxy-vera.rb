@@ -97,9 +97,8 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   # listen_for /set level ([0-9,]*[0-9]) on ([\d\w\s]*)/i do |number,input|
   listen_for /change ([\d\w\s]*)/i do |input|
     if @dimmable_lights.has_key?(input.downcase)
-      say "I can change the level of the #{input.downcase} for you."
-      number = ask "To what should I change it?"
-      if (number =~ /([0-9,]*[0-9])/i) and ((number <= 100) and (number >= 0))
+      number = ask "To what should I change #{input.downcase} to?"
+      if (number =~ /([0-9,]*[0-9])/i) and ((number.to_i <= 100) and (number.to_i >= 0))
         result = turn(@dimmable_lights[input.downcase], number)
         say "Turning #{input.downcase} to #{number} percent." if result
         say "Error turning #{input.downcase} to #{number} percent." if not result
