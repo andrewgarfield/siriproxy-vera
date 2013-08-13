@@ -17,10 +17,60 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     #if you have custom configuration options, process them here!
     @base_uri = "http://vera:3480"
     @client = HTTPClient.new
-    data = MultiJson.load(@client.get("#{@base_uri}/data_request", {:id => "sdata", :output_format => :json}).content)
-    @scenes = Array.new
-    data['scenes'].each {|scene| @scenes << [scene['name'],scene['id']]}
-    puts "Vera plugin running"
+    # data = MultiJson.load(@client.get("#{@base_uri}/data_request", {:id => "sdata", :output_format => :json}).content)
+    data = MultiJson.load(@client.get("#{@base_uri}/data_request", {:id => "user_data", :output_format => :json}).content)
+    @scenes = parse_scenes(data)
+    @binary_lights = parse_binary_lights(data)
+    @dimmable_lights = parse_dimmable_lights(data)
+    puts "Vera plugin running.  Detected #{@scenes.size} scenes, #{@dimmable_lights.size} dimmable lights, and #{@binary_lights.size} binary lights."
+  end
+  
+  def parse_scenes(data)
+    scenes = Hash.new
+    data['scenes'].each {|scene| scenes[scene['name'].downcase.gsub(/[^a-z\s]/,"")] = scene['id'].to_s}
+    return scenes
+  end
+  
+  def parse_binary_lights(data)
+    lights = Hash.new
+    for device in data['devices']
+      if device['device_type'] == "urn:schemas-upnp-org:device:BinaryLight:1"
+        lights[device['name'].downcase.gsub(/[^a-z\s]/,"")] = {'DeviceNum' => device['id'], 'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'}
+      end
+    end
+    return lights
+  end
+  
+  def parse_dimmable_lights(data)
+    lights = Hash.new
+    for device in data['devices']
+      if device['device_type'] == "urn:schemas-upnp-org:device:DimmableLight:1"
+        lights[device['name'].downcase.gsub(/[^a-z\s]/,"")] = {'DeviceNum' => device['id'], 'serviceId' => 'urn:upnp-org:serviceId:Dimming1'}
+      end
+    end
+    return lights
+  end
+  
+  def turn(light, on_or_off)
+    if light['serviceId'] == "urn:upnp-org:serviceId:SwitchPower1"
+      perform_action = {:action => "SetTarget", :id => "lu_action"}
+      perform_action['newTargetValue'] = "1" if on_or_off.downcase == "on" 
+      perform_action['newTargetValue'] = "0" if on_or_off.downcase == "off"
+      set_light(light, perform_action) 
+     elsif light['serviceId'] == "urn:upnp-org:serviceId:Dimming1"
+       set_dimmable(light, 100) if on_or_off.downcase == "on"
+       set_dimmable(light, 0) if on_or_off.downcase == "off" 
+     end
+  end
+  
+  def set_dimmable(light, to_load_level)
+    perform_action = {'id' => "lu_action", "action" => "SetLoadLevelTarget", "newLoadlevelTarget" => to_load_level.to_s}
+    set_light(light, perform_action)
+  end
+  
+  def set_light(light, to_level)
+    return @client.get("#{@base_uri}/data_request",
+         light.merge(to_level))
   end
   
   listen_for /how many scenes do you know/i do
@@ -31,12 +81,14 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   
   listen_for /set ([\d\w\s]*)/i do |input|
      #say "I undestood #{input}"
-     if @scenes.collect(&:first).collect(&:downcase).include?(input.downcase)
-        scene_index = @scenes.collect(&:first).collect(&:downcase).index(input.downcase)
-        scene_to_run = @scenes[scene_index]
-        result = @client.get("#{@base_uri}/data_request", {:id => "lu_action", :serviceId => "urn:micasaverde-com:serviceId:HomeAutomationGateway1", :action => "RunScene", :SceneNum => scene_to_run.last.to_i})
-        say "Running scene #{scene_to_run.first}" if result
-        say "Error running scene #{scene_to_run.first}" if not result
+     if @scenes.has_key?(input.downcase)
+        result = @client.get("#{@base_uri}/data_request",
+         {:id => "lu_action", 
+           :serviceId => "urn:micasaverde-com:serviceId:HomeAutomationGateway1", 
+           :action => "RunScene", 
+           :SceneNum => @scenes[input.downcase]})
+        say "Running scene #{input.downcase}" if result
+        say "Error running scene #{input.downcase}" if not result
       else
         say "Couldn't find a scene by the name #{input}"
       end
