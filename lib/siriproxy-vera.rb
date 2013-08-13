@@ -94,7 +94,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     request_completed
   end
   
-  listen_for /dim ([\d\w\s]*) to ([0-9,]*[0-9]) percent/i do |input,number|
+  listen_for /set the ([\d\w\s]*) to ([0-9,]*[0-9]) percent/i do |input,number|
     
     #say "I undestood #{input}"
     if @dimmable_lights.has_key?(input.downcase) and ((number <= 100) and (number >= 0))
@@ -108,7 +108,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     request_completed
   end
   
-  listen_for /set ([\d\w\s]*)/i do |input|
+  listen_for /set (scene|seen) ([\d\w\s]*)/i do |input|
     #say "I undestood #{input}"
     if @scenes.has_key?(input.downcase)
       result = @client.get("#{@base_uri}/data_request",
