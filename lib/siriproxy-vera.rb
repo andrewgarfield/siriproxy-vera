@@ -94,7 +94,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     request_completed
   end
   
-  listen_for /(DM|dim) the ([\d\w\s]*) to level ([0-9,]*[0-9])/i do ||spacer,input,number|
+  listen_for /(DM|dim) the ([\d\w\s]*) to level ([0-9,]*[0-9])/i do |spacer,input,number|
     
     #say "I undestood #{input}"
     if @dimmable_lights.has_key?(input.downcase) and ((number <= 100) and (number >= 0))
