@@ -53,7 +53,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   
   def turn(light, on_or_off)
     if light['serviceId'] == "urn:upnp-org:serviceId:SwitchPower1"
-      perform_action = {:action => "SetTarget", :id => "lu_action"}
+      perform_action = {:action => "SetTarget"}
       perform_action['newTargetValue'] = "1" if on_or_off.downcase == "on" 
       perform_action['newTargetValue'] = "0" if on_or_off.downcase == "off"
       set_light(light, perform_action) 
@@ -64,19 +64,23 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   def set_dimmable(light, to_load_level)
-    perform_action = {'id' => "lu_action", "action" => "SetLoadLevelTarget", "newLoadlevelTarget" => to_load_level.to_s}
+    perform_action = {"action" => "SetLoadLevelTarget", "newLoadlevelTarget" => to_load_level.to_s}
     set_light(light, perform_action)
   end
   
   def set_light(light, to_level)
     return @client.get("#{@base_uri}/data_request",
-         light.merge(to_level))
+         {'id' => 'lu_action'}.merge(light).merge(to_level))
   end
   
   listen_for /how many scenes do you know/i do
     say "I know about #{@scenes.size} scenes"
 
     request_completed
+  end
+  
+  listen_for /turn ([a-z]*) the ([\d\w\s]*)/i do |on_or_off, input|
+    
   end
   
   listen_for /set ([\d\w\s]*)/i do |input|
