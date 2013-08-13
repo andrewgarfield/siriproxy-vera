@@ -13,11 +13,13 @@ require 'multi_json'
 ######
 
 class SiriProxy::Plugin::Vera < SiriProxy::Plugin
+  attr_accessor :vera_ip
+  attr_accessor :vera_port
+  
   def initialize(config)
     #if you have custom configuration options, process them here!
-    @base_uri = "http://vera:3480"
+    @base_uri = "http://#{config["vera_ip"]}:#{config['vera_port']}"
     @client = HTTPClient.new
-    # data = MultiJson.load(@client.get("#{@base_uri}/data_request", {:id => "sdata", :output_format => :json}).content)
     data = MultiJson.load(@client.get("#{@base_uri}/data_request", {:id => "user_data", :output_format => :json}).content)
     @scenes = parse_scenes(data)
     @binary_lights = parse_binary_lights(data)
@@ -52,18 +54,13 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   def turn(light, on_or_off)
-    if light['serviceId'] == "urn:upnp-org:serviceId:SwitchPower1"
-      perform_action = {:action => "SetTarget"}
-      perform_action['newTargetValue'] = "1" if on_or_off.downcase == "on" 
-      perform_action['newTargetValue'] = "0" if on_or_off.downcase == "off"
-      set_light(light, perform_action) 
-    elsif light['serviceId'] == "urn:upnp-org:serviceId:Dimming1"
-      set_dimmable(light, 99) if on_or_off.downcase == "on"
-      set_dimmable(light, 0) if on_or_off.downcase == "off" 
-    end
+    perform_action = {:action => "SetTarget"}
+    perform_action['newTargetValue'] = "1" if on_or_off.downcase == "on" 
+    perform_action['newTargetValue'] = "0" if on_or_off.downcase == "off"
+    set_light(light, perform_action) 
   end
   
-  def set_dimmable(light, to_load_level)
+  def turn_dimmable(light, to_load_level)
     perform_action = {"action" => "SetLoadLevelTarget", "newLoadlevelTarget" => to_load_level}
     set_light(light, perform_action)
   end
@@ -74,7 +71,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   listen_for /how many scenes do you know/i do
-    say "I know about #{@scenes.size} scenes"
+    say "I know about #{@scenes.size} scenes."
 
     request_completed
   end
@@ -99,7 +96,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     if @dimmable_lights.has_key?(input.downcase)
       number = ask "To what should I change #{input.downcase} to?"
       if (number =~ /([0-9,]*[0-9])/i) and ((number.to_i <= 100) and (number.to_i >= 0))
-        result = turn(@dimmable_lights[input.downcase], number)
+        result = turn_dimmable(@dimmable_lights[input.downcase], number)
         say "Turning #{input.downcase} to #{number} percent." if result
         say "Error turning #{input.downcase} to #{number} percent." if not result
       end
