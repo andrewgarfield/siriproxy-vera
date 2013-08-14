@@ -60,8 +60,8 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
       perform_action['newTargetValue'] = "0" if on_or_off.downcase == "off"
       set_light(light, perform_action) 
     elsif light['serviceId'] == "urn:upnp-org:serviceId:Dimming1"
-      set_dimmable(light, 100) if on_or_off.downcase == "on"
-      set_dimmable(light, 0) if on_or_off.downcase == "off" 
+      turn_dimmable(light, 100) if on_or_off.downcase == "on"
+      turn_dimmable(light, 0) if on_or_off.downcase == "off" 
     end
 
   end
