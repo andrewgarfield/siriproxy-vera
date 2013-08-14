@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.summary     = %q{A SiriProxy plugin to run scenes on your VeraLite}
   s.description = %q{This plugin will set scenes on your VeraLite. }
 
-  s.rubyforge_project = "siriproxy-example"
+  s.rubyforge_project = "siriproxy-vera"
 
   s.files         = `git ls-files 2> /dev/null`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/* 2> /dev/null`.split("\n")
