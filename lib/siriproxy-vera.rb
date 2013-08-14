@@ -54,10 +54,16 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   def turn(light, on_or_off)
-    perform_action = {:action => "SetTarget"}
-    perform_action['newTargetValue'] = "1" if on_or_off.downcase == "on" 
-    perform_action['newTargetValue'] = "0" if on_or_off.downcase == "off"
-    set_light(light, perform_action) 
+    if light['serviceId'] == "urn:upnp-org:serviceId:SwitchPower1"
+      perform_action = {:action => "SetTarget"}
+      perform_action['newTargetValue'] = "1" if on_or_off.downcase == "on" 
+      perform_action['newTargetValue'] = "0" if on_or_off.downcase == "off"
+      set_light(light, perform_action) 
+    elsif light['serviceId'] == "urn:upnp-org:serviceId:Dimming1"
+      set_dimmable(light, 100) if on_or_off.downcase == "on"
+      set_dimmable(light, 0) if on_or_off.downcase == "off" 
+    end
+
   end
   
   def turn_dimmable(light, to_load_level)
@@ -107,7 +113,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     request_completed
   end
   
-  listen_for /set (scene|seen) ([\d\w\s]*)/i do |spacer,input|
+  listen_for /set (scene|seen|seem) ([\d\w\s]*)/i do |spacer,input|
     #say "I undestood #{input}"
     if @scenes.has_key?(input.downcase)
       result = @client.get("#{@base_uri}/data_request",

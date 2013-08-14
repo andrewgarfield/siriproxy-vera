@@ -60,7 +60,7 @@ To install SiriProxy-Vera into your SiriProxy server, please perform the followi
     `vera_ip: '192.168.1.56'
     
 3. Update your SiriProxy installation
-4. 
+
     `rvmsudo siriproxy update`
 
 4. Start the SiriProxy server
