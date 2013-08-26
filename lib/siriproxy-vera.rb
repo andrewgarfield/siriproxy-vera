@@ -4,14 +4,6 @@ require 'pp'
 require 'httpclient'
 require 'multi_json'
 
-#######
-# This is a "hello world" style plugin. It simply intercepts the phrase "test siri proxy" and responds
-# with a message about the proxy being up and running (along with a couple other core features). This
-# is good base code for other plugins.
-#
-# Remember to add other plugins to the "config.yml" file if you create them!
-######
-
 class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   attr_accessor :vera_ip
   attr_accessor :vera_port
@@ -27,12 +19,35 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     puts "Vera plugin running.  Detected #{@scenes.size} scenes, #{@dimmable_lights.size} dimmable lights, and #{@binary_lights.size} binary lights."
   end
   
+  def reload_from_vera
+    old_binary_lights = @binary_lights
+    old_dimmable_lights = @dimmable_lights
+    old_scenes = @scenes
+    data = MultiJson.load(@client.get("#{@base_uri}/data_request", {:id => "user_data", :output_format => :json}).content)
+    @scenes = parse_scenes(data)
+    @binary_lights = parse_binary_lights(data)
+    @dimmable_lights = parse_dimmable_lights(data)
+    response = "Detected: "
+    response += (old_scenes == @scenes) ? "Changes to Scenes." : "No Scene Changes"
+    response += (old_binary_lights == @binary_lights) ? "Changes to Binary Lights." : "No Binary Light Changes."
+    response += (old_dimmable_lights == @dimmable_lights) ? "Changes to Dimmable Lights" : "No Dimmable Light Changes"
+    return response
+  end
+  
+  # This function parses scene information from the vera config file, and creates a hash with each scene name and 
+  # it's scene Id. Each scene name is converted to be all lowercase and have any punctuations and numbers stripped 
+  # out. So a scene named "Alarm On!" becomes "alarm on". This is because the plugin performs a direct match 
+  # between the english words it receives from Siri, and the object name.  We have to sanitize the device names to
+  # fit the expected output from siri.
   def parse_scenes(data)
     scenes = Hash.new
     data['scenes'].each {|scene| scenes[scene['name'].downcase.gsub(/[^a-z\s]/,"")] = scene['id'].to_s}
     return scenes
   end
   
+  # This parses binary lights from the vera config file, and creates a hash with the device number, and service id 
+  # for turning on and off the lights.  The device names are sanitized (as discussed above) to conform to expected
+  # siri output.
   def parse_binary_lights(data)
     lights = Hash.new
     for device in data['devices']
@@ -43,6 +58,9 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     return lights
   end
   
+  # This parses dimmable lights from the vera config file, and creates a hash with the device number, and service id 
+  # for controlling the brightness of the lights.  The device names are sanitized (as discussed above) to conform to
+  # expected siri output
   def parse_dimmable_lights(data)
     lights = Hash.new
     for device in data['devices']
@@ -53,6 +71,8 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     return lights
   end
   
+  # Higher level call to set up the action required to turn on/off the light.  Sets up action for both dimmable lights
+  # or for binary lights since both can be set to on or off in a binary fashion.
   def turn(light, on_or_off)
     if light['serviceId'] == "urn:upnp-org:serviceId:SwitchPower1"
       perform_action = {:action => "SetTarget"}
@@ -66,11 +86,13 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
 
   end
   
+  # Same as turn(light, on_or_off) only for dimmable lights
   def turn_dimmable(light, to_load_level)
     perform_action = {"action" => "SetLoadLevelTarget", "newLoadlevelTarget" => to_load_level}
     set_light(light, perform_action)
   end
   
+  # Performs actual call to the vera box to perform the task
   def set_light(light, to_level)
     return @client.get("#{@base_uri}/data_request",
     {'id' => 'lu_action'}.merge(light).merge(to_level))
@@ -78,6 +100,13 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   
   listen_for /how many scenes do you know/i do
     say "I know about #{@scenes.size} scenes."
+
+    request_completed
+  end
+
+  listen_for /reload device information/i do
+    response = reload_from_vera
+    say response, spoken: "Okay, I have reloaded the configuration from Vera."
 
     request_completed
   end
