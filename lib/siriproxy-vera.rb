@@ -138,7 +138,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     if @alarm
       arm_mode = get_variable(@alarm, "ArmMode")
       if arm_mode == "Disarmed"
-        request = perform_action(alarm, "RequestArmMode", "State", "Armed")
+        request = perform_action(@alarm, "RequestArmMode", "State", "Armed")
         say "Be Safe!  See you soon!", :spoken => "Okay, I'll prepare the house for you." if request
         say "Sorry but something went wrong." if not request
       else
@@ -155,7 +155,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     if @alarm
       arm_mode = get_variable(@alarm, "ArmMode")
       if arm_mode == "Disarmed"
-        request = perform_action(alarm, "RequestArmMode", "State", "Stay")
+        request = perform_action(@alarm, "RequestArmMode", "State", "Stay")
         say "Okay, I will arm the house for you." if request
         say "Sorry but something went wrong." if not request
       else
