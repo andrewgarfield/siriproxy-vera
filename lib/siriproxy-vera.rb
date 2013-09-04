@@ -134,7 +134,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     request_completed
   end
   
-  listen_for /(i|we) (am|are) leaving/ do
+  listen_for /(I|We) (am|are) leaving/ do
     if @alarm
       arm_mode = get_variable(@alarm, "ArmMode")
       if arm_mode == "Disarmed"
@@ -151,7 +151,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     request_completed
   end
   
-  listen_for /(i|we) (am|are) staying in/ do
+  listen_for /(I|We) (am|are) staying in/ do
     if @alarm
       arm_mode = get_variable(@alarm, "ArmMode")
       if arm_mode == "Disarmed"
