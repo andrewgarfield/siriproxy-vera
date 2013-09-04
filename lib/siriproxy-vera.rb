@@ -16,6 +16,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     @scenes = parse_scenes(data)
     @binary_lights = parse_binary_lights(data)
     @dimmable_lights = parse_dimmable_lights(data)
+    @alarm = parse_alarm(data)
     puts "Vera plugin running.  Detected #{@scenes.size} scenes, #{@dimmable_lights.size} dimmable lights, and #{@binary_lights.size} binary lights."
   end
   
@@ -29,9 +30,9 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     @binary_lights = parse_binary_lights(data)
     @dimmable_lights = parse_dimmable_lights(data)
     response = "Detected: "
-    response += (old_scenes == @scenes) ? "Changes to Scenes." : "No Scene Changes"
-    response += (old_binary_lights == @binary_lights) ? "Changes to Binary Lights." : "No Binary Light Changes."
-    response += (old_dimmable_lights == @dimmable_lights) ? "Changes to Dimmable Lights" : "No Dimmable Light Changes"
+    response += (old_scenes == @scenes) ? "No Scene Changes. " : "Changes to Scenes. "
+    response += (old_binary_lights == @binary_lights) ? "No Binary Light Changes. " : "Changes to Binary Lights. "
+    response += (old_dimmable_lights == @dimmable_lights) ? "No Dimmable Light Changes. " : "Changes to Dimmable Lights" 
     puts response
     return response
   end
@@ -73,32 +74,37 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     return lights
   end
   
+  def parse_alarm(data)
+    for device in data['devices']
+      if device['category_num'] == 23
+        for state in device["states"]
+          return {'DeviceNum' => device['id'], 'serviceId' => state["service"]} if state["variable"] == "ArmMode"
+        end
+      end
+    end
+  end
+    
+  def get_variable(device, variable)
+    @client.get("#{@base_uri}/data_request", {:id => "variableget", "Variable" => variable}.merge(device)).content
+  end
+  
+  # vera:49451/data_request?id=action&serviceId=urn:micasaverde-com:serviceId:AlarmPartition2&DeviceNum=20&RequestArmMode=Disarmed&PINCode=2623
+  def perform_action(device, action, variable, set_to)
+    @client.get("#{@base_uri}/data_request", {:id => "action", :action => action, variable.to_sym => set_to}.merge(device)).content
+  end
+  
   # Higher level call to set up the action required to turn on/off the light.  Sets up action for both dimmable lights
   # or for binary lights since both can be set to on or off in a binary fashion.
   def turn(light, on_or_off)
     if light['serviceId'] == "urn:upnp-org:serviceId:SwitchPower1"
-      perform_action = {:action => "SetTarget"}
-      perform_action['newTargetValue'] = "1" if on_or_off.downcase == "on" 
-      perform_action['newTargetValue'] = "0" if on_or_off.downcase == "off"
-      set_light(light, perform_action) 
+      target = "1" if on_or_off.downcase == "on" 
+      target = "0" if on_or_off.downcase == "off"
+      perform_action(light, "SetTarget", "newTargetValue", target) 
     elsif light['serviceId'] == "urn:upnp-org:serviceId:Dimming1"
-      turn_dimmable(light, 100) if on_or_off.downcase == "on"
-      turn_dimmable(light, 0) if on_or_off.downcase == "off" 
+      perform_action(light, "SetLoadLevelTarget", "newLoadlevelTarget", 100) if on_or_off.downcase == "on"
+      perform_action(light, "SetLoadLevelTarget", "newLoadlevelTarget", 0) if on_or_off.downcase == "off" 
     end
-
-  end
-  
-  # Same as turn(light, on_or_off) only for dimmable lights
-  def turn_dimmable(light, to_load_level)
-    perform_action = {"action" => "SetLoadLevelTarget", "newLoadlevelTarget" => to_load_level}
-    set_light(light, perform_action)
-  end
-  
-  # Performs actual call to the vera box to perform the task
-  def set_light(light, to_level)
-    return @client.get("#{@base_uri}/data_request",
-    {'id' => 'lu_action'}.merge(light).merge(to_level))
-  end
+  end 
   
   listen_for /how many scenes do you know/i do
     say "I know about #{@scenes.size} scenes."
@@ -127,6 +133,41 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
 
     request_completed
   end
+  
+  listen_for /(i|we) (am|are) leaving/ do
+    if @alarm
+      arm_mode = get_variable(@alarm, "ArmMode")
+      if arm_mode == "Disarmed"
+        request = perform_action(alarm, "RequestArmMode", "State", "Armed")
+        say "Be Safe!  See you soon!", :spoken => "Okay, I'll prepare the house for you." if request
+        say "Sorry but something went wrong." if not request
+      else
+        say "Sorry, the alarm is already armed."
+      end
+    else
+      say "Sorry, I cannot find an alarm among your devices."
+    end
+    
+    request_completed
+  end
+  
+  listen_for /(i|we) (am|are) staying in/ do
+    if @alarm
+      arm_mode = get_variable(@alarm, "ArmMode")
+      if arm_mode == "Disarmed"
+        request = perform_action(alarm, "RequestArmMode", "State", "Stay")
+        say "Okay, I will arm the house for you." if request
+        say "Sorry but something went wrong." if not request
+      else
+        say "Sorry, the alarm is already armed."
+      end
+    else
+      say "Sorry, I cannot find an alarm among your devices."
+    end
+    
+    request_completed
+  end
+  
   
   # listen_for /set level ([0-9,]*[0-9]) on ([\d\w\s]*)/i do |number,input|
   listen_for /change ([\d\w\s]*)/i do |input|
