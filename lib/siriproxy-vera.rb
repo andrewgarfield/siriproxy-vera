@@ -23,6 +23,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     old_binary_lights = @binary_lights
     old_dimmable_lights = @dimmable_lights
     old_scenes = @scenes
+    @binary_lights, @dimmable_lights, @scenes = {}
     data = MultiJson.load(@client.get("#{@base_uri}/data_request", {:id => "user_data", :output_format => :json}).content)
     @scenes = parse_scenes(data)
     @binary_lights = parse_binary_lights(data)
@@ -31,6 +32,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     response += (old_scenes == @scenes) ? "Changes to Scenes." : "No Scene Changes"
     response += (old_binary_lights == @binary_lights) ? "Changes to Binary Lights." : "No Binary Light Changes."
     response += (old_dimmable_lights == @dimmable_lights) ? "Changes to Dimmable Lights" : "No Dimmable Light Changes"
+    puts response
     return response
   end
   
