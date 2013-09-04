@@ -7,11 +7,12 @@ I have a VeraLite, and I have an iPhone (with Siri).  Though there are great app
 
 Just by chance I happened upon the awesome SiriProxy program that would allow me to control Vera through Siri.  I was hoping that somebody else would write a nice plugin like this so that I could just install and run it, but after the better part of a year (since I learned about SiriProxy), I couldn't find anything. So I decided to write one myself.
 
-This plugin, at least in it's current iteration, allows for control of three things and three things only:
+This plugin, at least in it's current iteration, allows for control of four things and four things only:
 
 	- Scenes
 	- Binary Lights
 	- Dimmable Lights
+	- Alarm Systems (arming only)
 
 The plugin automatically fetches each of the devices and scenes of these kinds and makes them available.
 
@@ -37,6 +38,18 @@ Once the plugin is installed and the server is running you can ask it to do seve
     You: "Turn on the <light name>"
     Siri: "Turning <light name> on."
     
+    **Setting alarm system into away mode.**
+    You: "I am leaving" or "We are leaving"
+    Siri: "Okay, I'll prepare the house for you."
+    
+    **Setting alarm system into home mode.**
+    You: "I am staying in" or "We are staying in"
+    Siri: "Okay, I will arm the house for you."
+    
+    **To reload the configuration changes from Vera (such as if you change the name of a scene or device.**
+    You: "Reload device information"
+    Siri: "Okay, I have reloaded the configuration from Vera."
+    
     **Asking how many scenes Siri knows about (for testing purposes)**
     You: "How many scenes do you know?"
     Siri: "I know about <number of scenes> scenes.
@@ -57,7 +70,7 @@ To install SiriProxy-Vera into your SiriProxy server, please perform the followi
       
 2. Change the "vera_ip" option within the stuff you just pasted into config.yml to the IP address or hostname of your vera unit.
 
-    `vera_ip: '192.168.1.56'
+    `vera_ip: '192.168.1.56'`
     
 3. Update your SiriProxy installation
 
@@ -110,6 +123,31 @@ I had this on a few of my scenes as well.  I had a few scenes that my wife ran i
 
 The solution? Make your scene names less complicated.  I suggest using no more than 2-3 word names.  While you're at it, you should probably rename all your scenes into a more speech-friendly way.  SiriProxy and this plugin can not guess what you meant to say, it has to be an exact match to the name of a scene or device in order for it to make the connections. 
 
+**Why won't siriproxy-vera allow me to disarm my alarm panel?**
+
+I decided that it wasn't the best security practice to allow voice control over disarming the alarm panel.  If it did, anyone with your phone could just simply talk into siri to disarm your whole security system.
+
+If you really want to add this functionality, you can copy one of the existing functions to arm the systems, and replace the values with those to allow for disarming.  Shouldn't be too hard, honestly.
+
+**I have an alarm panel, why won't siriproxy-vera let me use it?**
+
+Sorry about that.  The only alarm system I can test with is my own (a Honeywell Vista alarm panel).  I am not able to test on any other systems simply because I don't have any other systems.
+
+That being said, I'm pretty sure most of the alarm panel specifications are standardized, and i did my best to write to the standard. Siriproxy-vera identifies a device by it's categorization number of 23, which should be for an alarm partition.  It then scans the services available to identify the right service ID to perform actions on.
+
+If I failed to write to the standard, or your vera's alarm panel plugin wasn't written to specification this won't work.  Please let me know of this so I can try to fix it.
+
+**I have several alarm partitions, but siriproxy-vera only finds one.  What's the deal?**
+
+Unfortunately there is only limited support for alarm systems at the moment.  And part of that initial support is that it finds a single partition (whichever it locates first) and uses it.  Since I only have a single partition alarm it was really the only way for me to code in initial support.  I'd love to hear your feedback though on how to enhance this functionality.
+
+**It's nice that siriproxy-vera will arm my alarm system, but how do I get it to run scenes as well?**
+
+The best way to implement this is to create a scene (or scenes) that respond to your alarm system's triggers.
+
+For example, I have scenes that get triggered with the alarm goes into "ExitDelay" that turn on certain lights near doorways for us to see as we exit the house.  Then when the alarm switches to "Away" (or technically "Armed") mode, it triggers scenes to turn off all the ligths in the house and raise the thermostat.
+
+But each of these scenes are triggered by the alarm panel itself and not siriproxy-vera.  These scenes and triggers would fire the same if I manually armed the system or if I used siriproxy-vera.
 
 Acknowledgements
 -----------------
