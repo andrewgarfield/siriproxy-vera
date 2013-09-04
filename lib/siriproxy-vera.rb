@@ -142,7 +142,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
         say "Be Safe!  See you soon!", :spoken => "Okay, I'll prepare the house for you." if request
         say "Sorry but something went wrong." if not request
       else
-        say "Sorry, the alarm is already armed."
+        say "For security reasons, I am programmed to never disarm your system.", :spoken => "Sorry, the alarm is already armed."
       end
     else
       say "Sorry, I cannot find an alarm among your devices."
@@ -159,7 +159,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
         say "Okay, I will arm the house for you." if request
         say "Sorry but something went wrong." if not request
       else
-        say "Sorry, the alarm is already armed."
+        say "For security reasons, I am programmed to never disarm your system.", :spoken => "Sorry, the alarm is already armed."
       end
     else
       say "Sorry, I cannot find an alarm among your devices."
