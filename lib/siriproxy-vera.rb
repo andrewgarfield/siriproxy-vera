@@ -140,13 +140,14 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   # Turns your alarm partition to away (or more technically "Armed") mode.
   listen_for /(I|We) (am|are) leaving/ do
     if @alarm # Ensures that siriproxy-vera found an alarm panel from your system.
-      arm_mode = get_variable(@alarm, "ArmMode") 
-      if arm_mode == "Disarmed"
+      arm_mode = get_variable(@alarm, "ArmMode")
+      detailed_arm_mode = get_variable(@alarm, "DetailedArmMode")
+      if (arm_mode == "Disarmed") or (detailed_arm_mode == "NotReady")
         request = perform_action(@alarm, "RequestArmMode", "State", "Armed") # Runs call to arm the system.
         say "Be Safe!  See you soon!", :spoken => "Okay, I'll prepare the house for you." if request
         say "Sorry but something went wrong." if not request
       else
-        say "For security reasons, I am programmed to never disarm your system.", :spoken => "Sorry, the alarm is already armed."
+        say "For security reasons, I am programmed to never disarm your system.", :spoken => "Sorry, the alarm is either not ready or already armed."
       end
     else
       say "Sorry, I cannot find an alarm among your devices."
@@ -159,12 +160,13 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   listen_for /(I|We) (am|are) staying in/ do
     if @alarm # Ensures that siriproxy-vera found an alarm panel from your system.
       arm_mode = get_variable(@alarm, "ArmMode")
-      if arm_mode == "Disarmed"
+      detailed_arm_mode = get_variable(@alarm, "DetailedArmMode")
+      if (arm_mode == "Disarmed") or (detailed_arm_mode == "NotReady")
         request = perform_action(@alarm, "RequestArmMode", "State", "Stay")  # Runs call to arm the system.
         say "Okay, I will arm the house for you." if request
         say "Sorry but something went wrong." if not request
       else
-        say "For security reasons, I am programmed to never disarm your system.", :spoken => "Sorry, the alarm is already armed."
+        say "For security reasons, I am programmed to never disarm your system.", :spoken => "Sorry, the alarm is either not ready or already armed."
       end
     else
       say "Sorry, I cannot find an alarm among your devices."
@@ -173,6 +175,24 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     request_completed
   end
   
+  # Turns your alarm partition to Stay mode.
+  listen_for /(I|We) (am|are) going to sleep/ do
+    if @alarm # Ensures that siriproxy-vera found an alarm panel from your system.
+      arm_mode = get_variable(@alarm, "ArmMode")
+      detailed_arm_mode = get_variable(@alarm, "DetailedArmMode")
+      if (arm_mode == "Disarmed") or (detailed_arm_mode == "NotReady")
+        request = perform_action(@alarm, "RequestArmMode", "State", "Night")  # Runs call to arm the system.
+        say "Okay, I will prepare the house for you.  Goodnight and sweet dreams!" if request
+        say "Sorry but something went wrong." if not request
+      else
+        say "For security reasons, I am programmed to never disarm your system.", :spoken => "Sorry, the alarm is either not ready or already armed."
+      end
+    else
+      say "Sorry, I cannot find an alarm among your devices."
+    end
+    
+    request_completed
+  end
   
   # Listen command to change the light level of a dimmable light
   listen_for /change ([\d\w\s]*)/i do |input|
