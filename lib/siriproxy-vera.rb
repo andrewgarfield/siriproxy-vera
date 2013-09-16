@@ -138,7 +138,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     if @alarm # Ensures that siriproxy-vera found an alarm panel from your system.
       arm_mode = get_variable(@alarm, "ArmMode")
       detailed_arm_mode = get_variable(@alarm, "DetailedArmMode")
-      if (arm_mode == "Disarmed") or (detailed_arm_mode == "NotReady")
+      if (arm_mode == "Disarmed") and (detailed_arm_mode != "NotReady")
         request = perform_action(@alarm, "RequestArmMode", "State", "Armed") # Runs call to arm the system.
         say "Be Safe!  See you soon!", :spoken => "Okay, I'll prepare the house for you." if request
         say "Sorry but something went wrong." if not request
@@ -157,7 +157,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     if @alarm # Ensures that siriproxy-vera found an alarm panel from your system.
       arm_mode = get_variable(@alarm, "ArmMode")
       detailed_arm_mode = get_variable(@alarm, "DetailedArmMode")
-      if (arm_mode == "Disarmed") or (detailed_arm_mode == "NotReady")
+      if (arm_mode == "Disarmed") and (detailed_arm_mode != "NotReady")
         request = perform_action(@alarm, "RequestArmMode", "State", "Stay")  # Runs call to arm the system.
         say "Okay, I will arm the house for you." if request
         say "Sorry but something went wrong." if not request
@@ -176,7 +176,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     if @alarm # Ensures that siriproxy-vera found an alarm panel from your system.
       arm_mode = get_variable(@alarm, "ArmMode")
       detailed_arm_mode = get_variable(@alarm, "DetailedArmMode")
-      if (arm_mode == "Disarmed") or (detailed_arm_mode == "NotReady")
+      if (arm_mode == "Disarmed") and (detailed_arm_mode != "NotReady")
         request = perform_action(@alarm, "RequestArmMode", "State", "Night")  # Runs call to arm the system.
         say "Okay, I will prepare the house for you.  Goodnight and sweet dreams!" if request
         say "Sorry but something went wrong." if not request
