@@ -14,8 +14,8 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     @client = HTTPClient.new
     data = MultiJson.load(@client.get("#{@base_uri}/data_request", {:id => "user_data", :output_format => :json}).content)
     @scenes = parse_scenes(data)
-    @binary_lights = parse_binary_lights(data)
     @dimmable_lights = parse_dimmable_lights(data)
+    @binary_lights = parse_binary_lights(data)
     @alarm = parse_alarm(data)
     puts "Vera plugin running.  Detected #{@scenes.size} scenes, #{@dimmable_lights.size} dimmable lights, and #{@binary_lights.size} binary lights."
   end
@@ -27,8 +27,8 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     @binary_lights, @dimmable_lights, @scenes = {}
     data = MultiJson.load(@client.get("#{@base_uri}/data_request", {:id => "user_data", :output_format => :json}).content)
     @scenes = parse_scenes(data)
-    @binary_lights = parse_binary_lights(data)
     @dimmable_lights = parse_dimmable_lights(data)
+    @binary_lights = parse_binary_lights(data)
     response = "Detected: "
     response += (old_scenes == @scenes) ? "No Scene Changes. " : "Changes to Scenes. "
     response += (old_binary_lights == @binary_lights) ? "No Binary Light Changes. " : "Changes to Binary Lights. "
@@ -58,6 +58,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
         lights[device['name'].downcase.gsub(/[^a-z\s]/,"")] = {'DeviceNum' => device['id'], 'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'}
       end
     end
+    lights = lights.merge(@dimmable_lights.each{|key,value| value.merge!({'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'})})
     return lights
   end
   
@@ -97,14 +98,9 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   # Higher level call to set up the action required to turn on/off the light.  Sets up action for both dimmable lights
   # or for binary lights since both can be set to on or off in a binary fashion.
   def turn(light, on_or_off)
-    if light['serviceId'] == "urn:upnp-org:serviceId:SwitchPower1"
-      target = "1" if on_or_off.downcase == "on" 
-      target = "0" if on_or_off.downcase == "off"
-      perform_action(light, "SetTarget", "newTargetValue", target) 
-    elsif light['serviceId'] == "urn:upnp-org:serviceId:Dimming1"
-      perform_action(light, "SetLoadLevelTarget", "newLoadlevelTarget", 100) if on_or_off.downcase == "on"
-      perform_action(light, "SetLoadLevelTarget", "newLoadlevelTarget", 0) if on_or_off.downcase == "off" 
-    end
+    target = "1" if on_or_off.downcase == "on" 
+    target = "0" if on_or_off.downcase == "off"
+    perform_action(light, "SetTarget", "newTargetValue", target) 
   end 
   
   # a good listen function just for testing siriproxy-vera.
@@ -199,9 +195,11 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     if @dimmable_lights.has_key?(input.downcase) # Search the keys in the @dimmable_lights hash for a match to the input.
       number = ask "To what should I change #{input.downcase} to?"
       if (number =~ /([0-9,]*[0-9])/i) and ((number.to_i <= 100) and (number.to_i >= 0)) # Ask for additional input the dim level.
-        result = turn_dimmable(@dimmable_lights[input.downcase], number)
+        result = perform_action(@dimmable_lights[input.downcase], "SetLoadLevelTarget", "newLoadlevelTarget", number)
         say "Turning #{input.downcase} to #{number} percent." if result
         say "Error turning #{input.downcase} to #{number} percent." if not result
+      else
+        say "Sorry, but the number #{number} is not within specification."
       end
     else
       say "Couldn't find a device by the name #{input}."
