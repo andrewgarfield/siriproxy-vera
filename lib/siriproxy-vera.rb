@@ -17,7 +17,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     @dimmable_lights = parse_dimmable_lights(data)
     @binary_lights = parse_binary_lights(data)
     @alarm = parse_alarm(data)
-    puts "Vera plugin running.  Detected #{@scenes.size} scenes, #{@dimmable_lights.size} dimmable lights, and #{@binary_lights.size} binary lights."
+    puts "Vera plugin running.  Detected #{@scenes.size} scenes, #{@dimmable_lights.size} dimmable lights, and #{@binary_lights.size-@dimmable_lights.size} binary lights."
   end
   
   def reload_from_vera
