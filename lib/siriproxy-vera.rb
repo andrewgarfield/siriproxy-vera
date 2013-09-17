@@ -58,7 +58,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
         lights[device['name'].downcase.gsub(/[^a-z\s]/,"")] = {'DeviceNum' => device['id'], 'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'}
       end
     end
-    lights = lights.merge(@dimmable_lights.each{|key,value| value.merge!({'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'})}) unless @dimmable_lights.zero?
+    lights = lights.merge(@dimmable_lights.each{|key,value| value.merge!({'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'})}) if @dimmable_lights
     return lights
   end
   
