@@ -25,12 +25,12 @@ Usage
 Once the plugin is installed and the server is running you can ask it to do several things.  Here's the list of what it is listening for.
 
     **To run a scene**
-    You: "Set scene <scene name>"
+    You: "Set scene <scene name>" or "Set <scene name>" or "Set scene to <scene name>"
     Siri: "Running scene <scene name>"
     
     **To change the brightness of a dimmer**
-    You: "Change <dimmable light name>"
-    Siri: "To what should I change <dimmable light night> to?"
+    You: "Change <dimmable light name>" or "Change the <dimmable light name>" or "Change the brightness of the <dimmable light name>"
+    Siri: "To what should I change <dimmable light name> to?"
     You: "50"
     Siri: "Turning <dimmable light name> to 50 percent."
     
@@ -45,6 +45,10 @@ Once the plugin is installed and the server is running you can ask it to do seve
     **Setting alarm system into home mode.**
     You: "I am staying in" or "We are staying in"
     Siri: "Okay, I will arm the house for you."
+	
+    **Setting alarm system into night mode.**
+    You: "I am going to sleep" or "We are going to sleep"
+    Siri: "Okay, I will prepare the house for you.  Goodnight and sweet dreams!"
     
     **To reload the configuration changes from Vera (such as if you change the name of a scene or device.**
     You: "Reload device information"
@@ -115,7 +119,7 @@ Yes! I wrote this specifically into the code for these functions.  Since dimmabl
 
 **I added/deleted/changed a scene or device on my Vera.  How do I get the plugin to pick up the changes?**
 
-I plan to shortly add a refresh option so that you can just ask Siri to reload it.  But for now, simply stop and restart the SiriProxy server and it will fetch the updated information.
+That's very easy!  All you have to do is tell Siri to "Reload device information".  It'll pick up any configuration changes from your vera!
 
 **I cannot set certain scenes because I cannot pronounce them in a way that Siri will understand.  What can I do?**
 
@@ -148,6 +152,13 @@ The best way to implement this is to create a scene (or scenes) that respond to 
 For example, I have scenes that get triggered with the alarm goes into "ExitDelay" that turn on certain lights near doorways for us to see as we exit the house.  Then when the alarm switches to "Away" (or technically "Armed") mode, it triggers scenes to turn off all the ligths in the house and raise the thermostat.
 
 But each of these scenes are triggered by the alarm panel itself and not siriproxy-vera.  These scenes and triggers would fire the same if I manually armed the system or if I used siriproxy-vera.
+
+Discussion
+----------
+Discussion and support for this plugin is provided at the micasaverde forums.  Please feel free to make an account and ask questions!
+
+Here's the thread discussions:
+http://forum.micasaverde.com/index.php/topic,16081.0.html
 
 Acknowledgements
 -----------------

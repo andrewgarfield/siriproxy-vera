@@ -58,7 +58,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
         lights[device['name'].downcase.gsub(/[^a-z\s]/,"")] = {'DeviceNum' => device['id'], 'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'}
       end
     end
-    lights = lights.merge(@dimmable_lights.each{|key,value| value.merge!({'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'})})
+    lights = lights.merge(@dimmable_lights.each{|key,value| value.merge!({'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'})}) unless @dimmable_lights.zero?
     return lights
   end
   
@@ -119,7 +119,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   # Turns on or off a binary or dimmable light.
-  listen_for /turn ([a-z]*) the ([\d\w\s]*)/i do |on_or_off, input|
+  listen_for /turn ([a-z]*) (?:the )?([\d\w\s]*)/i do |on_or_off, input|
     lights = @binary_lights.merge(@dimmable_lights) #merge the binary and dimmabe light hashes.
     
     if lights.has_key?(input.downcase) # Search the keys in the lights hash for a match to the input.
@@ -134,7 +134,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   # Turns your alarm partition to away (or more technically "Armed") mode.
-  listen_for /(I|We) (am|are) leaving/ do
+  listen_for /(?:I|We) (?:am|are) leaving/ do
     if @alarm # Ensures that siriproxy-vera found an alarm panel from your system.
       arm_mode = get_variable(@alarm, "ArmMode")
       detailed_arm_mode = get_variable(@alarm, "DetailedArmMode")
@@ -153,7 +153,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   # Turns your alarm partition to Stay mode.
-  listen_for /(I|We) (am|are) staying in/ do
+  listen_for /(?:I|We) (?:am|are) staying in/ do
     if @alarm # Ensures that siriproxy-vera found an alarm panel from your system.
       arm_mode = get_variable(@alarm, "ArmMode")
       detailed_arm_mode = get_variable(@alarm, "DetailedArmMode")
@@ -172,7 +172,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   # Turns your alarm partition to Stay mode.
-  listen_for /(I|We) (am|are) going to sleep/ do
+  listen_for /(?:I|We) (?:am|are) going to sleep/ do
     if @alarm # Ensures that siriproxy-vera found an alarm panel from your system.
       arm_mode = get_variable(@alarm, "ArmMode")
       detailed_arm_mode = get_variable(@alarm, "DetailedArmMode")
@@ -191,7 +191,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   # Listen command to change the light level of a dimmable light
-  listen_for /change ([\d\w\s]*)/i do |input|
+  listen_for /change (?:the )?(?:brightness of the|brightness of)?([\d\w\s]*)/i do |input|
     if @dimmable_lights.has_key?(input.downcase) # Search the keys in the @dimmable_lights hash for a match to the input.
       number = ask "To what should I change #{input.downcase} to?"
       if (number =~ /([0-9,]*[0-9])/i) and ((number.to_i <= 100) and (number.to_i >= 0)) # Ask for additional input the dim level.
@@ -209,7 +209,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   # listen command to run a particular scene.
-  listen_for /set (scene|seen|seem) ([\d\w\s]*)/i do |spacer,input|
+  listen_for /set (?:scene|seen|seem)?(?:to )?([\d\w\s]*)/i do |input|
     if @scenes.has_key?(input.downcase) # Search the keys in the @scenes hash for a match to the input.
       result = @client.get("#{@base_uri}/data_request",
       {:id => "lu_action", 
