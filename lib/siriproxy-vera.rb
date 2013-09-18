@@ -58,9 +58,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
         lights[device['name'].downcase.gsub(/[^a-z\s]/,"")] = {'DeviceNum' => device['id'], 'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'}
       end
     end
-    for light in @dimmable_lights
-      lights[light['name']] = {'DeviceNum' => light['id'], 'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'}
-    end
+    @dimmable_lights.each {|key, value| lights[key] = {'DeviceNum' => value['DeviceNum'], 'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'}}
     return lights
   end
   
@@ -197,7 +195,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     if @dimmable_lights.has_key?(input.downcase) # Search the keys in the @dimmable_lights hash for a match to the input.
       number = ask "To what should I change #{input.downcase} to?"
       if (number =~ /([0-9,]*[0-9])/i) and ((number.to_i <= 100) and (number.to_i >= 0)) # Ask for additional input the dim level.
-        result = perform_action(@dimmable_lights[input.downcase], "SetLoadLevelTarget", "newLoadlevelTarget", number.to_i)
+        result = perform_action(@dimmable_lights[input.downcase], "SetLoadLevelTarget", "newLoadlevelTarget", number)
         say "Turning #{input.downcase} to #{number} percent." if result
         say "Error turning #{input.downcase} to #{number} percent." if not result
       else
