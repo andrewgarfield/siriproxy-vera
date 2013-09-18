@@ -195,7 +195,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
     if @dimmable_lights.has_key?(input.downcase) # Search the keys in the @dimmable_lights hash for a match to the input.
       number = ask "To what should I change #{input.downcase} to?"
       if (number =~ /([0-9,]*[0-9])/i) and ((number.to_i <= 100) and (number.to_i >= 0)) # Ask for additional input the dim level.
-        result = perform_action(@dimmable_lights[input.downcase], "SetLoadLevelTarget", "newLoadlevelTarget", number)
+        result = perform_action(@dimmable_lights[input.downcase], "SetLoadLevelTarget", "newLoadlevelTarget", number.to_i)
         say "Turning #{input.downcase} to #{number} percent." if result
         say "Error turning #{input.downcase} to #{number} percent." if not result
       else
