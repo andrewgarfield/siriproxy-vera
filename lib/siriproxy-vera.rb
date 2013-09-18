@@ -191,7 +191,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   # Listen command to change the light level of a dimmable light
-  listen_for /change (?:the )?(?:brightness of the|brightness of)?([\d\w\s]*)/i do |input|
+  listen_for /change (?:the )?(?:brightness of the |brightness of )?([\d\w\s]*)/i do |input|
     if @dimmable_lights.has_key?(input.downcase) # Search the keys in the @dimmable_lights hash for a match to the input.
       number = ask "To what should I change #{input.downcase} to?"
       if (number =~ /([0-9,]*[0-9])/i) and ((number.to_i <= 100) and (number.to_i >= 0)) # Ask for additional input the dim level.
@@ -209,7 +209,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   # listen command to run a particular scene.
-  listen_for /set (?:scene|seen|seem)?(?:to )?([\d\w\s]*)/i do |input|
+  listen_for /set (?:scene|seen|seem)?(?: to)? ([\d\w\s]*)/i do |input|
     if @scenes.has_key?(input.downcase) # Search the keys in the @scenes hash for a match to the input.
       result = @client.get("#{@base_uri}/data_request",
       {:id => "lu_action", 
