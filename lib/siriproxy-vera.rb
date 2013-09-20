@@ -209,7 +209,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   # listen command to run a particular scene.
-  listen_for /set (?:scene|seen|seem)?(?:to )?([\d\w\s]*)/i do |input|
+  listen_for /set (?:scene |seen |seem )?(?:to )?([\d\w\s]*)/i do |input|
     if @scenes.has_key?(input.downcase) # Search the keys in the @scenes hash for a match to the input.
       result = @client.get("#{@base_uri}/data_request",
       {:id => "lu_action", 
