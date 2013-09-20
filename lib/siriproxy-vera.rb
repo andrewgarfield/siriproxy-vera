@@ -58,8 +58,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
         lights[device['name'].downcase.gsub(/[^a-z\s]/,"")] = {'DeviceNum' => device['id'], 'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'}
       end
     end
-    lights = lights.merge(@dimmable_lights.each{|key,value| value.merge!({'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'})}) if @dimmable_lights
-    return lights
+    @dimmable_lights.each {|key, value| lights[key] = {'DeviceNum' => value['DeviceNum'], 'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'}}
   end
   
   # This parses dimmable lights from the vera config file, and creates a hash with the device number, and service id 
