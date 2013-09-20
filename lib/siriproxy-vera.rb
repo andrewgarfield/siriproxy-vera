@@ -59,6 +59,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
       end
     end
     @dimmable_lights.each {|key, value| lights[key] = {'DeviceNum' => value['DeviceNum'], 'serviceId' => 'urn:upnp-org:serviceId:SwitchPower1'}}
+    return lights
   end
   
   # This parses dimmable lights from the vera config file, and creates a hash with the device number, and service id 
@@ -190,7 +191,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   end
   
   # Listen command to change the light level of a dimmable light
-  listen_for /change (?:the )?(?:brightness of the|brightness of)?([\d\w\s]*)/i do |input|
+  listen_for /change (?:the )?(?:brightness of the |brightness of )?([\d\w\s]*)/i do |input|
     if @dimmable_lights.has_key?(input.downcase) # Search the keys in the @dimmable_lights hash for a match to the input.
       number = ask "To what should I change #{input.downcase} to?"
       if (number =~ /([0-9,]*[0-9])/i) and ((number.to_i <= 100) and (number.to_i >= 0)) # Ask for additional input the dim level.
