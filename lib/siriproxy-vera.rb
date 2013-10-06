@@ -120,7 +120,7 @@ class SiriProxy::Plugin::Vera < SiriProxy::Plugin
   
   # Turns on or off a binary or dimmable light.
   listen_for /turn ([a-z]*) (?:the )?([\d\w\s]*)/i do |on_or_off, input|
-    lights = @binary_lights.merge(@dimmable_lights) #merge the binary and dimmabe light hashes.
+    lights = @binary_lights #merge the binary and dimmabe light hashes.
     
     if lights.has_key?(input.downcase) # Search the keys in the lights hash for a match to the input.
       result = turn(lights[input.downcase], on_or_off) # Perform the action to turn on/off the lights.
